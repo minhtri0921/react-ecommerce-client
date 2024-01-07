@@ -9,11 +9,12 @@ const Product = () => {
   const { id } = useParams();
   const [product, setProduct] = useState([]);
   const [similarProducts, setSimilarProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [loading2, setLoading2] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loading2, setLoading2] = useState(true);
+  const [useEffectCompleted, setUseEffectCompleted] = useState(false);
 
   const addProduct = async () => {
-    const user = JSON.parse(localStorage.getItem("currentUser"))
+    const user = JSON.parse(localStorage.getItem("currentUser"));
     const formData = {
       quantity: 1,
       unitPrice: product.price,
@@ -34,25 +35,22 @@ const Product = () => {
       setLoading2(true);
 
       try {
-        console.log(id);
-        // const response1 = await axios(`http://localhost:3001/products/${id}`);
         const response1 = await axios(
           `https://wm-shop-be.onrender.com/api/v1/customer/products/${id}`
         );
         const prd = response1.data.data;
         setProduct(prd);
         setLoading(false);
-        console.log(prd);
 
-        // const response2 = await axios(
-        //   `http://localhost:3001/products/categoryName/${prd.categoryName}`
-        // );
         const response2 = await axios(
           `https://wm-shop-be.onrender.com/api/v1/customer/products?categoryId=${prd.categoryId}&keyword=&orderByPrice=&limit=50&fbclid=IwAR3FduGfL8aLR_Zbr_GtorCC-vO8HGqmno4UC-H-xsXsdGSsWQQUTvT6WYE`
         );
         const data2 = response2.data.data.data;
         setSimilarProducts(data2);
         setLoading2(false);
+
+        // Đánh dấu useEffect đã hoàn thành
+        setUseEffectCompleted(true);
       } catch (error) {
         console.error("Error fetching data:", error);
         setLoading(false);
@@ -62,7 +60,7 @@ const Product = () => {
 
     getProduct();
   }, [id]);
-  console.log(product);
+
   const Loading = () => {
     return (
       <>
@@ -85,7 +83,13 @@ const Product = () => {
       </>
     );
   };
+
   const ShowProduct = () => {
+    // Chờ useEffect hoàn thành trước khi hiển thị
+    if (!useEffectCompleted) {
+      return null;
+    }
+
     return (
       <>
         <div className="container my-5 py-2">
@@ -93,16 +97,16 @@ const Product = () => {
             <div className="col-md-6 col-sm-12 py-3">
               <img
                 className="img-fluid"
-                src={product.imageList}
+                src={product.imageList[0]}
                 alt=""
                 width="400px"
                 height="400px"
               />
+              {console.log(product)}
             </div>
+            
             <div className="col-md-6 col-md-6 py-5">
-              {/* <h4 className="text-uppercase text-muted">{product.categoryName}</h4> */}
               <h1 className="display-5">{product.name}</h1>
-
               <h3 className="display-6  my-4">${product.price}</h3>
               <p className="lead">{product.description}</p>
               <button
@@ -164,9 +168,6 @@ const Product = () => {
                       {item?.title?.substring(0, 15)}...
                     </h5>
                   </div>
-                  {/* <ul className="list-group list-group-flush">
-                    <li className="list-group-item lead">${product.price}</li>
-                  </ul> */}
                   <div className="card-body">
                     <Link
                       to={"/product/" + item.id}
@@ -189,6 +190,7 @@ const Product = () => {
       </>
     );
   };
+
   return (
     <>
       <Navbar />
